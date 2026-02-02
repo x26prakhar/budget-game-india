@@ -1,0 +1,2823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>If You Were Finance Minister | Budget 2026-27</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+        }
+
+        .header-emoji {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #a0a0a0;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .total-budget {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .total-budget h2 {
+            font-size: 1rem;
+            color: #a0a0a0;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .budget-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #4ade80;
+        }
+
+        .budget-breakdown {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .budget-stat {
+            text-align: center;
+        }
+
+        .budget-stat-label {
+            font-size: 0.85rem;
+            color: #a0a0a0;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .budget-stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .budget-stat-value.allocated {
+            color: #fbbf24;
+        }
+
+        .budget-stat-value.remaining {
+            color: #4ade80;
+        }
+
+        .budget-stat-value.remaining.zero {
+            color: #fbbf24;
+        }
+
+        .budget-stat-value.remaining.negative {
+            color: #ef4444;
+        }
+
+        .warning-message {
+            margin-top: 15px;
+            padding: 12px 20px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            color: #ef4444;
+            font-weight: 600;
+            font-size: 0.95rem;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Sliders */
+        .sliders-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .slider-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            transition: background 0.3s;
+        }
+
+        .slider-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .slider-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-icon {
+            font-size: 1.5rem;
+        }
+
+        .slider-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .slider-value {
+            text-align: right;
+        }
+
+        .slider-amount {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #fbbf24;
+        }
+
+        .slider-percent {
+            font-size: 0.85rem;
+            color: #a0a0a0;
+        }
+
+        /* Custom Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(243, 156, 18, 0.4);
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 10px rgba(243, 156, 18, 0.4);
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 18px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(243, 156, 18, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Others Footnote */
+        .others-footnote {
+            font-size: 0.85rem;
+            color: #888;
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 0 10px;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 20px;
+        }
+
+        .results-header h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .results-header p {
+            color: #a0a0a0;
+        }
+
+        /* Insight Cards */
+        .insights-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .insights-logic {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .insights-logic.success {
+            background: rgba(74, 222, 128, 0.1);
+            border-color: rgba(74, 222, 128, 0.3);
+        }
+
+        .logic-icon {
+            font-size: 1.3rem;
+        }
+
+        .logic-text {
+            font-size: 0.95rem;
+            color: #d1d5db;
+            line-height: 1.4;
+        }
+
+        .logic-text strong {
+            color: #fbbf24;
+        }
+
+        .insights-logic.success .logic-text strong {
+            color: #4ade80;
+        }
+
+        .insight-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 25px;
+            border-left: 4px solid;
+            animation: slideIn 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        .insight-card:nth-child(1) { animation-delay: 0.1s; }
+        .insight-card:nth-child(2) { animation-delay: 0.2s; }
+        .insight-card:nth-child(3) { animation-delay: 0.3s; }
+        .insight-card:nth-child(4) { animation-delay: 0.4s; }
+        .insight-card:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .insight-card.more {
+            border-color: #4ade80;
+        }
+
+        .insight-card.less {
+            border-color: #ef4444;
+        }
+
+        .insight-card.same {
+            border-color: #fbbf24;
+        }
+
+        .insight-card.surprise {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .insight-category {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .insight-icon {
+            font-size: 1.5rem;
+        }
+
+        .insight-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .insight-comparison {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .comparison-item {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .comparison-label {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .comparison-item.you .comparison-value {
+            color: #fbbf24;
+        }
+
+        .comparison-item.actual .comparison-value {
+            color: #4ade80;
+        }
+
+        .insight-message {
+            font-size: 1rem;
+            line-height: 1.6;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .insight-message strong {
+            color: #fbbf24;
+        }
+
+        .multiplier {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .multiplier.more {
+            color: #4ade80;
+        }
+
+        .multiplier.less {
+            color: #ef4444;
+        }
+
+        /* Bar Comparison */
+        .bar-comparison {
+            margin: 15px 0;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .bar-label {
+            width: 60px;
+            font-size: 0.85rem;
+            color: #a0a0a0;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .bar-fill.you {
+            background: linear-gradient(90deg, #f39c12, #e74c3c);
+        }
+
+        .bar-fill.actual {
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+        }
+
+        .bar-percent {
+            width: 50px;
+            text-align: right;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Score Display */
+        .score-display {
+            text-align: center;
+            padding: 40px 30px;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
+            border-radius: 20px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .score-number {
+            font-size: 5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 15px;
+        }
+
+        .score-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fbbf24;
+            margin-bottom: 10px;
+        }
+
+        .score-subtitle {
+            font-size: 0.95rem;
+            color: #888;
+        }
+
+        /* Community Stats */
+        .community-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+        }
+
+        .community-stat {
+            text-align: center;
+        }
+
+        .community-stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .community-stat-label {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .percentile-highlight {
+            color: #4ade80;
+        }
+
+        .percentile-highlight.top-10 {
+            color: #fbbf24;
+        }
+
+        .percentile-highlight.top-5 {
+            color: #f472b6;
+        }
+
+        .stats-loading {
+            color: #666;
+            font-style: italic;
+        }
+
+        .community-stat.full-width {
+            width: 100%;
+            flex-basis: 100%;
+        }
+
+        .percentile-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4ade80;
+        }
+
+        .percentile-text.top-10 {
+            color: #fbbf24;
+        }
+
+        .percentile-text.top-5 {
+            color: #f472b6;
+        }
+
+        /* Celebration/Disaster Animations */
+        .particle-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            font-size: 2rem;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-50px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(90vh) scale(1);
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .balloon {
+            position: absolute;
+            font-size: 3rem;
+            animation: floatUp 4s ease-out forwards;
+        }
+
+        .mms-face {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: mmsFall linear forwards;
+            border-radius: 50%;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        /* All tiers stay colorful - only expression changes */
+        .mms-face.elite {
+            filter: drop-shadow(0 0 12px rgba(74, 222, 128, 0.7));
+            animation: mmsDanceFall linear forwards;
+        }
+
+        .mms-face.good {
+            filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.5));
+        }
+
+        .mms-face.average {
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .mms-face.poor {
+            filter: drop-shadow(0 4px 10px rgba(239, 68, 68, 0.5));
+        }
+
+        .mms-face.terrible {
+            filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.6));
+        }
+
+        @keyframes mmsFall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes mmsDanceFall {
+            0% {
+                transform: translateY(-100px) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            25% {
+                transform: translateY(25vh) rotate(-20deg) scale(1.2);
+            }
+            50% {
+                transform: translateY(50vh) rotate(20deg) scale(0.9);
+            }
+            75% {
+                transform: translateY(75vh) rotate(-20deg) scale(1.2);
+            }
+            100% {
+                transform: translateY(100vh) rotate(0deg) scale(1);
+                opacity: 0.8;
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: confettiFall linear forwards;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-10px) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(1080deg) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        /* Score display animations by tier */
+        .score-display.elite {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(34, 197, 94, 0.15));
+            border-color: rgba(74, 222, 128, 0.5);
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        .score-display.good {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(59, 130, 246, 0.15));
+            border-color: rgba(96, 165, 250, 0.5);
+        }
+
+        .score-display.average {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        .score-display.poor {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .score-display.terrible {
+            background: linear-gradient(135deg, rgba(107, 114, 128, 0.2), rgba(75, 85, 99, 0.15));
+            border-color: rgba(107, 114, 128, 0.4);
+        }
+
+        /* Screen shake for terrible score */
+        .screen-shake {
+            animation: screenShake 0.6s ease-in-out;
+        }
+
+        @keyframes screenShake {
+            0%, 100% { transform: translateX(0); }
+            10% { transform: translateX(-10px) rotate(-1deg); }
+            20% { transform: translateX(10px) rotate(1deg); }
+            30% { transform: translateX(-10px) rotate(-1deg); }
+            40% { transform: translateX(10px) rotate(1deg); }
+            50% { transform: translateX(-5px) rotate(-0.5deg); }
+            60% { transform: translateX(5px) rotate(0.5deg); }
+            70% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+            90% { transform: translateX(-1px); }
+        }
+
+        /* Red flash overlay for disaster */
+        .disaster-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(239, 68, 68, 0.4);
+            pointer-events: none;
+            z-index: 999;
+            animation: flashRed 0.8s ease-out forwards;
+        }
+
+        @keyframes flashRed {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Disaster stamp/splat */
+        .disaster-stamp {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0) rotate(-15deg);
+            font-size: 8rem;
+            z-index: 1001;
+            animation: stampIn 0.5s ease-out forwards;
+            text-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        @keyframes stampIn {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.3) rotate(-15deg); opacity: 1; }
+            70% { transform: translate(-50%, -50%) scale(0.9) rotate(-15deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(-15deg); opacity: 0; }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(74, 222, 128, 0.6); }
+        }
+
+        .score-display.elite .score-number {
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .score-display.elite .score-title {
+            color: #4ade80;
+        }
+
+        .score-display.terrible .score-number {
+            background: linear-gradient(90deg, #6b7280, #4b5563);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .score-display.terrible .score-title {
+            color: #9ca3af;
+        }
+
+        /* Summary Stats */
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #e0e0e0;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .stat-sublabel {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        /* Budget Info Popup */
+        .budget-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .budget-popup-overlay.show {
+            display: flex;
+        }
+
+        .budget-popup {
+            background: linear-gradient(135deg, #1e1e2e, #2d2d44);
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            animation: popupSlideIn 0.3s ease-out;
+        }
+
+        @keyframes popupSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .popup-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-close:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .popup-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .popup-icon {
+            font-size: 2.5rem;
+        }
+
+        .popup-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+
+        .popup-amount {
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .popup-amount .amount-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+
+        .popup-amount .amount-label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .popup-content {
+            color: #d0d0d0;
+        }
+
+        .popup-content h4 {
+            color: #fbbf24;
+            font-size: 1rem;
+            margin: 20px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .popup-content h4:first-child {
+            margin-top: 0;
+        }
+
+        .popup-content ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .popup-content li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .popup-content li strong {
+            color: #fff;
+        }
+
+        .popup-content .highlight-box {
+            background: rgba(74, 222, 128, 0.1);
+            border-left: 3px solid #4ade80;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .popup-footer {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .popup-hint {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Make insight cards clickable */
+        .insight-card {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .insight-card-link {
+            display: block;
+            font-size: 0.75rem;
+            color: #60a5fa;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        /* Surprise Fact */
+        .surprise-fact {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .surprise-fact h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #c4b5fd;
+        }
+
+        .surprise-fact p {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Reset Button */
+        .reset-btn {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Share Button */
+        .share-btn {
+            width: 100%;
+            padding: 18px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: #f39c12;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .budget-amount {
+                font-size: 2rem;
+            }
+
+            .slider-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .slider-value {
+                text-align: left;
+            }
+
+            .insight-comparison {
+                flex-direction: column;
+            }
+
+            /* Add padding at bottom for mobile ticker */
+            #allocation-section {
+                padding-bottom: 70px;
+            }
+        }
+
+        /* Mobile Allocation Ticker */
+        .mobile-ticker {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1e1e2e, #2d2d44);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 12px 20px;
+            z-index: 1500;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        @media (max-width: 600px) {
+            .mobile-ticker {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .ticker-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ticker-label {
+            font-size: 0.65rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .ticker-value {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .ticker-value.allocated {
+            color: #fbbf24;
+        }
+
+        .ticker-value.remaining {
+            color: #4ade80;
+        }
+
+        .ticker-value.remaining.negative {
+            color: #ef4444;
+        }
+
+        .ticker-value.remaining.zero {
+            color: #4ade80;
+        }
+
+        .ticker-progress {
+            flex: 1;
+            margin: 0 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ticker-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .ticker-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .ticker-bar-fill.over {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .ticker-percent {
+            font-size: 0.7rem;
+            color: #a0a0a0;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Allocation Section -->
+        <div id="allocation-section">
+            <div class="header">
+                <div class="header-emoji">🇮🇳</div>
+                <h1>If You Were Finance Minister</h1>
+                <p>You have India's entire budget to allocate. How would YOU spend it?</p>
+            </div>
+
+            <div class="total-budget">
+                <h2>Total Budget 2026-27</h2>
+                <div class="budget-amount">₹53 Lakh Crore</div>
+                <div class="budget-breakdown">
+                    <div class="budget-stat">
+                        <div class="budget-stat-label">Allocated</div>
+                        <div class="budget-stat-value allocated" id="total-allocated">₹0 L Cr</div>
+                    </div>
+                    <div class="budget-stat">
+                        <div class="budget-stat-label">Remaining</div>
+                        <div class="budget-stat-value remaining" id="remaining-amount">₹53.00 L Cr</div>
+                    </div>
+                </div>
+                <div class="warning-message" id="warning-message" style="display: none;">
+                    You cannot allocate more than ₹53 Lakh Crore!
+                </div>
+            </div>
+
+            <div class="sliders-container" id="sliders-container">
+                <!-- Sliders will be generated by JavaScript -->
+            </div>
+
+            <div class="others-footnote">
+                *Others includes: Urban Development, Energy, IT & Telecom, Commerce & Industry, External Affairs, Scientific Research, Social Welfare, and other government departments.
+            </div>
+
+            <button class="submit-btn" id="submit-btn" onclick="showResults()">
+                See How India Actually Spends →
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="results-section">
+            <div class="results-header">
+                <h2>Your Budget vs Reality</h2>
+                <p>Here's how your allocation compares to the actual Union Budget 2026-27</p>
+            </div>
+
+            <div class="score-display" id="score-display">
+                <!-- Generated by JS -->
+            </div>
+
+            <div class="summary-stats" id="summary-stats">
+                <!-- Generated by JS -->
+            </div>
+
+            <div class="surprise-fact" id="surprise-fact">
+                <!-- Generated by JS -->
+            </div>
+
+            <div class="insights-container" id="insights-container">
+                <!-- Generated by JS -->
+            </div>
+
+            <button class="share-btn" onclick="shareResults()">
+                📤 Share Your Budget
+            </button>
+
+            <button class="reset-btn" onclick="resetGame()">
+                ← Try Again with Different Allocations
+            </button>
+        </div>
+
+        <div class="footer">
+            <p>Data source: <a href="https://www.indiabudget.gov.in/" target="_blank">Union Budget 2026-27</a> | Built for civic awareness</p>
+        </div>
+    </div>
+
+    <!-- Budget Info Popup Modal -->
+    <div class="budget-popup-overlay" id="budget-popup" onclick="closeBudgetPopup(event)">
+        <div class="budget-popup">
+            <button class="popup-close" onclick="closeBudgetPopup()">&times;</button>
+            <div class="popup-header">
+                <span class="popup-icon" id="popup-icon"></span>
+                <h3 class="popup-title" id="popup-title"></h3>
+            </div>
+            <div class="popup-amount" id="popup-amount"></div>
+            <div class="popup-content" id="popup-content"></div>
+            <div class="popup-footer">
+                <span class="popup-hint">Click anywhere outside to close</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDP8mJjmjVg83dKJwGj04284qiU6o87Ync",
+            authDomain: "finance-minister-bfc97.firebaseapp.com",
+            projectId: "finance-minister-bfc97",
+            storageBucket: "finance-minister-bfc97.firebasestorage.app",
+            messagingSenderId: "280588041878",
+            appId: "1:280588041878:web:6a78f04754380e18564cb7",
+            measurementId: "G-F59VJQGQ32"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Save score and get community stats
+        async function saveScoreAndGetStats(score) {
+            try {
+                // Save this score
+                await db.collection('scores').add({
+                    score: score,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Get all scores to calculate percentile
+                const snapshot = await db.collection('scores').get();
+                const allScores = [];
+                snapshot.forEach(doc => {
+                    allScores.push(doc.data().score);
+                });
+
+                // Calculate percentile
+                const totalPlayers = allScores.length;
+                const scoresBelow = allScores.filter(s => s < score).length;
+                const percentile = Math.round((scoresBelow / totalPlayers) * 100);
+
+                // Update UI
+                const percentileEl = document.getElementById('percentile-value');
+                const totalPlayersEl = document.getElementById('total-players');
+
+                if (percentileEl) {
+                    percentileEl.textContent = `You beat ${percentile}% of players`;
+                    percentileEl.classList.remove('stats-loading');
+
+                    // Add color class based on percentile
+                    if (percentile >= 95) {
+                        percentileEl.classList.add('top-5');
+                    } else if (percentile >= 90) {
+                        percentileEl.classList.add('top-10');
+                    }
+                }
+
+                if (totalPlayersEl) {
+                    totalPlayersEl.textContent = totalPlayers.toLocaleString();
+                    totalPlayersEl.classList.remove('stats-loading');
+                }
+
+            } catch (error) {
+                console.error('Error saving score:', error);
+                // Show fallback if Firebase fails
+                const percentileEl = document.getElementById('percentile-value');
+                const totalPlayersEl = document.getElementById('total-players');
+                if (percentileEl) percentileEl.textContent = '--';
+                if (totalPlayersEl) totalPlayersEl.textContent = '--';
+            }
+        }
+
+        // Actual Budget Data (2026-27 Budget Estimates in ₹ Crore)
+        const TOTAL_BUDGET = 5300000; // ₹53 Lakh Crore (rounded)
+
+        const categories = [
+            { id: 'defence', name: 'Defence', icon: '🛡️', actual: 594585 },
+            { id: 'health', name: 'Health', icon: '🏥', actual: 104599 },
+            { id: 'education', name: 'Education', icon: '📚', actual: 139292 },
+            { id: 'transport', name: 'Transport', icon: '🚆', actual: 598520 },
+            { id: 'agri_rural', name: 'Agriculture & Rural', icon: '🌾', actual: 435779 },
+            { id: 'subsidy', name: 'Subsidies', icon: '🛒', actual: 410495, note: 'Food, Fertiliser, Petroleum' },
+            { id: 'interest', name: 'Interest Payments', icon: '💳', actual: 1403972, note: 'Debt servicing' },
+            { id: 'pension', name: 'Pension', icon: '👴', actual: 296214 },
+            { id: 'home', name: 'Home Affairs', icon: '🏛️', actual: 255234, note: 'Police, Security' },
+            { id: 'others', name: 'Others*', icon: '📦', actual: 1061310 }
+        ];
+
+        // Budget info for each category (shown in popup)
+        const budgetInfo = {
+            defence: {
+                title: 'Defence Budget 2026-27',
+                amount: '₹5.94 Lakh Crore',
+                content: `
+                    <h4>📊 Budget Snapshot</h4>
+                    <ul>
+                        <li>BE 2026-27: <strong>₹5,94,585 crore</strong> vs RE 2025-26: ₹5,67,855 crore</li>
+                        <li><strong>~4.7% YoY growth</strong> — moderate, but the real shift is in how money is spent</li>
+                    </ul>
+
+                    <h4>🎯 Key Shifts This Year</h4>
+                    <ul>
+                        <li>FY 2026-27 marks a <strong>clear break from incrementalism</strong>, especially in capital outlay</li>
+                        <li>Context: Operation Sindoor and sustained China-border tensions</li>
+                        <li><strong>Capital outlay jumps to ₹2,19,306 crore</strong> — fighter aircraft, submarines, drones, surveillance satellites</li>
+                        <li>First concrete signal that <strong>salaries and pensions are no longer crowding out modernisation</strong></li>
+                    </ul>
+
+                    <h4>🔧 Structural Changes</h4>
+                    <ul>
+                        <li>Pension share of defence expenditure is <strong>shrinking</strong> — likely due to Agnipath scheme</li>
+                        <li>IDDM (Indigenous design & manufacturing) pathway preferred, but <strong>reduced tolerance for delivery delays</strong></li>
+                        <li>Defence manufacturing treated as <strong>economic and geopolitical asset</strong>, not sunk cost</li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        💡 <strong>Did you know?</strong> Even after hitting a record ₹5.94 lakh crore, India's defence spending is still only ~2% of GDP — the real story isn't how much India spends, but how decisively it is shifting that spend toward modernisation and capital assets.
+                    </div>
+                `
+            },
+            health: {
+                title: 'Health Budget 2026-27',
+                amount: '₹1.05 Lakh Crore',
+                content: `
+                    <h4>📊 Budget Snapshot</h4>
+                    <ul>
+                        <li>BE 2026-27: <strong>₹1,04,599 crore</strong> vs RE 2025-26: ₹94,625 crore</li>
+                        <li><strong>~10.5% YoY growth</strong> — among the faster-growing social-sector heads</li>
+                    </ul>
+
+                    <h4>🎯 Key Shifts This Year</h4>
+                    <ul>
+                        <li>Structural shift from <strong>hospital-centric spending to care ecosystems</strong> — prevention, diagnostics, rehabilitation, long-term care</li>
+                        <li>Focus on <strong>allied health professionals, caregivers, and medical tourism hubs</strong></li>
+                        <li>Expansion of non-doctor health workforce addresses chronic capacity constraints</li>
+                    </ul>
+
+                    <h4>🔧 Strategic Direction</h4>
+                    <ul>
+                        <li><strong>AYUSH investments</strong> signal repositioning from domestic alternative medicine to export-oriented health services</li>
+                        <li>Health spending increasingly justified in <strong>productivity terms, not welfare terms</strong></li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        💡 <strong>Did you know?</strong> India now spends more on interest payments in just one month than it spends on healthcare in an entire year — which is why the health budget is increasingly framed as a productivity investment, not welfare.
+                    </div>
+                `
+            },
+            education: {
+                title: 'Education Budget 2026-27',
+                amount: '₹1.39 Lakh Crore',
+                content: `
+                    <h4>📊 Budget Snapshot</h4>
+                    <ul>
+                        <li>BE 2026-27: <strong>₹1,39,289 crore</strong> vs RE 2025-26: ₹1,21,949 crore</li>
+                        <li><strong>~14.2% YoY growth</strong> — one of the fastest-growing major expenditure heads</li>
+                    </ul>
+
+                    <h4>🎯 Key Shifts This Year</h4>
+                    <ul>
+                        <li>The defining shift is <strong>governance, not just spending</strong> — education explicitly chained to employment and enterprise outcomes</li>
+                        <li><strong>University townships near industrial corridors</strong> signal spatial integration of skills, industry, and logistics</li>
+                        <li><strong>Girls' STEM hostels</strong> address structural constraint on female labour force participation</li>
+                    </ul>
+
+                    <h4>🔧 Strategic Direction</h4>
+                    <ul>
+                        <li>Investments in <strong>scientific infrastructure and AVGC creator labs</strong> reflect diversification beyond conventional degrees</li>
+                        <li>Education policy increasingly judged by <strong>employability, not intake numbers</strong></li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        💡 <strong>Did you know?</strong> Education is one of the fastest-growing major heads in FY 2026–27 (+14.2% YoY), growing faster than defence, transport, and agriculture — a quiet but decisive pivot toward human capital.
+                    </div>
+                `
+            },
+            transport: {
+                title: 'Transport Budget 2026-27',
+                amount: '₹5.99 Lakh Crore',
+                content: `
+                    <h4>📊 Budget Snapshot</h4>
+                    <ul>
+                        <li>BE 2026-27: <strong>₹5,98,520 crore</strong> vs RE 2025-26: ₹5,47,563 crore</li>
+                        <li><strong>~9.3% YoY growth</strong> — remains one of the largest spending heads</li>
+                    </ul>
+
+                    <h4>🎯 Key Shifts This Year</h4>
+                    <ul>
+                        <li>Infrastructure remains the <strong>backbone of growth strategy</strong></li>
+                        <li>Real push visible in <strong>effective capital expenditure</strong>, which far exceeds headline allocations</li>
+                        <li><strong>Multi-modal expansion</strong> — roads, rail, airports, inland waterways — reduces logistics concentration risk</li>
+                    </ul>
+
+                    <h4>🔧 Strategic Direction</h4>
+                    <ul>
+                        <li>Transport spending now framed as a <strong>structural anti-inflation tool</strong>, not just growth stimulus</li>
+                        <li>Improved connectivity lowers freight costs, inventory holding, and supply bottlenecks</li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        💡 <strong>Did you know?</strong> India's effective capital expenditure (₹17.14 lakh crore) is almost 30% higher than the headline capex number — meaning infrastructure push is much bigger than it appears at first glance.
+                    </div>
+                `
+            },
+            agri_rural: {
+                title: 'Agriculture & Rural Budget 2026-27',
+                amount: '₹4.36 Lakh Crore',
+                content: `
+                    <h4>📊 Budget Snapshot</h4>
+                    <ul>
+                        <li>BE 2026-27: <strong>₹1,62,671 crore</strong> (Agriculture Ministry) vs RE 2025-26: ₹1,51,853 crore</li>
+                        <li><strong>~7.1% YoY growth</strong> — steady, without reverting to price-support populism</li>
+                    </ul>
+
+                    <h4>🎯 Key Shifts This Year</h4>
+                    <ul>
+                        <li>Emphasis shifts decisively from <strong>MSP-centric support to productivity, value chains, and diversification</strong></li>
+                        <li><strong>Water infrastructure, fisheries, and high-value crops</strong> receive greater attention than cereals</li>
+                        <li>Tech-enabled advisory systems aim to <strong>reduce risk rather than raise subsidies</strong></li>
+                    </ul>
+
+                    <h4>🔧 Strategic Direction</h4>
+                    <ul>
+                        <li>Rural policy increasingly prioritises <strong>income stability through assets and skills</strong></li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        💡 <strong>Did you know?</strong> The government now spends more on rural development and irrigation-linked assets than on traditional farm price support — signalling a shift from income protection to income creation.
+                    </div>
+                `
+            },
+            subsidy: {
+                title: 'Subsidies Budget 2026-27',
+                amount: '₹4.10 Lakh Crore',
+                content: `
+                    <h4>📊 Budget Snapshot</h4>
+                    <ul>
+                        <li>BE 2026-27: <strong>₹4,10,495 crore</strong> vs RE 2025-26: ₹4,29,735 crore</li>
+                        <li><strong>~−4.5% YoY</strong> — subsidies contract in real terms, confirming deliberate fiscal consolidation</li>
+                    </ul>
+
+                    <h4>🎯 Key Shifts This Year</h4>
+                    <ul>
+                        <li>Food and fertiliser subsidies continue, but <strong>without expansion</strong></li>
+                        <li>Focus shifts from coverage to <strong>efficiency and targeting</strong></li>
+                        <li>Subsidies increasingly used <strong>counter-cyclically rather than structurally</strong></li>
+                    </ul>
+
+                    <h4>🔧 Strategic Direction</h4>
+                    <ul>
+                        <li>The state is stepping back from income replacement toward <strong>market-linked support</strong></li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        💡 <strong>Did you know?</strong> Even after cuts, subsidies still cost over ₹4.1 lakh crore — but FY 2026–27 is one of the rare years where subsidies actually shrink while total spending rises.
+                    </div>
+                `
+            },
+            interest: {
+                title: 'Interest Payments 2026-27',
+                amount: '₹14.04 Lakh Crore',
+                content: `
+                    <h4>📊 Budget Snapshot</h4>
+                    <ul>
+                        <li>BE 2026-27: <strong>₹14,03,972 crore</strong> vs RE 2025-26: ₹12,74,338 crore</li>
+                        <li><strong>~10.2% YoY growth</strong> — remains the single largest expenditure item</li>
+                    </ul>
+
+                    <h4>⚠️ The Hard Reality</h4>
+                    <ul>
+                        <li>A growing share of government revenue is <strong>locked into servicing past debt</strong></li>
+                        <li>Falling primary deficit signals improved fiscal discipline, but <strong>legacy debt dominates</strong></li>
+                        <li>Interest costs <strong>crowd out discretionary spending</strong> across sectors</li>
+                    </ul>
+
+                    <h4>🔧 Fiscal Constraint</h4>
+                    <ul>
+                        <li>Today's budget flexibility is constrained more by <strong>history than by current policy choices</strong></li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        ⚠️ <strong>Did you know?</strong> India will spend ₹14 lakh crore just to pay interest in FY 2026–27 — that's more than the combined budgets of health, education, and agriculture.
+                    </div>
+                `
+            },
+            pension: {
+                title: 'Pension Budget 2026-27',
+                amount: '₹2.96 Lakh Crore',
+                content: `
+                    <h4>📊 Budget Snapshot</h4>
+                    <ul>
+                        <li>BE 2026-27: <strong>₹2,96,214 crore</strong> vs RE 2025-26: ₹2,86,641 crore</li>
+                        <li><strong>~3.3% YoY growth</strong> — steady but structurally sticky</li>
+                    </ul>
+
+                    <h4>🎯 Key Realities</h4>
+                    <ul>
+                        <li>Defence and civil pensions continue to <strong>absorb fiscal space</strong></li>
+                        <li>Reforms like <strong>Agnipath slow future growth</strong> but do not reduce near-term burden</li>
+                        <li>Pensions, combined with interest, form the <strong>hardest floor under expenditure</strong></li>
+                    </ul>
+
+                    <h4>🔧 Strategic Implication</h4>
+                    <ul>
+                        <li><strong>Growth, not cuts</strong>, is the only viable way to dilute pension pressure</li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        💡 <strong>Did you know?</strong> Pension spending alone (₹2.96 lakh crore) is larger than the entire education budget — making pensions one of the most powerful, least visible drivers of fiscal pressure.
+                    </div>
+                `
+            },
+            home: {
+                title: 'Home Affairs Budget 2026-27',
+                amount: '₹2.55 Lakh Crore',
+                content: `
+                    <h4>📊 Budget Snapshot</h4>
+                    <ul>
+                        <li>BE 2026-27: <strong>₹2,55,234 crore</strong> vs RE 2025-26: ₹2,41,485 crore</li>
+                        <li><strong>~5.7% YoY growth</strong> — steady rise reflecting internal security prioritisation</li>
+                    </ul>
+
+                    <h4>🎯 Key Shifts This Year</h4>
+                    <ul>
+                        <li>Focus extends beyond policing to <strong>intelligence, surveillance, and border management</strong></li>
+                        <li>Internal stability treated as a <strong>prerequisite for investment and capital flows</strong></li>
+                        <li>Spending emphasises <strong>preparedness over reaction</strong></li>
+                    </ul>
+
+                    <h4>🔧 Strategic Direction</h4>
+                    <ul>
+                        <li>Security expenditure is positioned as an <strong>economic enabler</strong>, not just administrative cost</li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        💡 <strong>Did you know?</strong> India spends more on internal security than on healthcare, reflecting how stability and law-and-order are treated as economic prerequisites, not just governance costs.
+                    </div>
+                `
+            },
+            others: {
+                title: 'Other Ministries Budget 2026-27',
+                amount: '₹10.61 Lakh Crore',
+                content: `
+                    <h4>📊 What's Included</h4>
+                    <ul>
+                        <li>This covers <strong>50+ other ministries</strong> and departments</li>
+                        <li>Includes Urban Development, Power, IT, Commerce, Science & Technology, Women & Child Development, and more</li>
+                    </ul>
+
+                    <p style="color: #888; margin-top: 20px; font-style: italic;">Detailed breakdown for this category coming soon.</p>
+                `
+            }
+        };
+
+        // Popup functions
+        function showBudgetPopup(categoryId) {
+            const info = budgetInfo[categoryId];
+            const category = categories.find(c => c.id === categoryId);
+            if (!info || !category) return;
+
+            document.getElementById('popup-icon').textContent = category.icon;
+            document.getElementById('popup-title').textContent = info.title;
+            document.getElementById('popup-amount').innerHTML = `
+                <div class="amount-value">${info.amount}</div>
+                <div class="amount-label">Budget Allocation 2026-27</div>
+            `;
+            document.getElementById('popup-content').innerHTML = info.content;
+            document.getElementById('budget-popup').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBudgetPopup(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('budget-popup').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // Close popup on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeBudgetPopup();
+            }
+        });
+
+        // User allocations (in crore)
+        let userAllocations = {};
+
+        // Score titles by tier (randomly selected)
+        const scoreTitles = {
+            elite: [
+                "Manmohan Singh Reincarnated",
+                "North Block is Calling You",
+                "The Next FM Candidate",
+                "Aapko Bulawa Aaya Hai Finance Ministry Se"
+            ],
+            good: [
+                "Nirmala Tai's Backup",
+                "Budget Day Live Viewer",
+                "IAS Interview Ready",
+                "Finance Committee Intern",
+                "Studied for UPSC Once"
+            ],
+            average: [
+                "WhatsApp University Economist",
+                "Watched Budget Highlights on YouTube",
+                "Chai Pe Charcha Expert",
+                "Twitter Thread Reader",
+                "Business News Background Noise"
+            ],
+            poor: [
+                "Crypto Bro",
+                "Paytm Cashback is My Finance Policy",
+                "Bhai Economics Nahi Aati",
+                "Slept Through Civics Class",
+                "Neighbourhood Uncle With Opinions",
+                "Stonks Guy 📈",
+                "GDP = Good Daily Paneer?",
+                "Vibes-Based Budgeting"
+            ],
+            terrible: [
+                "Finance Ministry Restraining Order",
+                "Please Don't Run for Office",
+                "RBI Governor's Nightmare"
+            ]
+        };
+
+        function getRandomTitle(tier) {
+            const titles = scoreTitles[tier];
+            return titles[Math.floor(Math.random() * titles.length)];
+        }
+
+        function calculateScore() {
+            let totalDeviation = 0;
+            categories.forEach(cat => {
+                const userPercent = (userAllocations[cat.id] / TOTAL_BUDGET) * 100;
+                const actualPercent = (cat.actual / TOTAL_BUDGET) * 100;
+                totalDeviation += Math.abs(userPercent - actualPercent);
+            });
+            return Math.max(0, Math.round(100 - totalDeviation));
+        }
+
+        function getScoreTier(score) {
+            if (score >= 90) return 'elite';
+            if (score >= 70) return 'good';
+            if (score >= 50) return 'average';
+            if (score >= 25) return 'poor';
+            return 'terrible';
+        }
+
+        // Celebration/Disaster animations
+        function createParticleContainer() {
+            // Remove existing container
+            const existing = document.querySelector('.particle-container');
+            if (existing) existing.remove();
+
+            const container = document.createElement('div');
+            container.className = 'particle-container';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        // MMS face as embedded SVG (Manmohan Singh stylized - turban + glasses + beard)
+        function createMMSSvg(tier) {
+            // Different expressions based on tier (only mouth changes, colors stay vibrant)
+            const expressions = {
+                elite: {
+                    mouth: 'M 35,72 Q 50,88 65,72', // Big happy smile
+                    teethShow: true,
+                    eyebrows: 'M 30,42 Q 38,38 46,42 M 54,42 Q 62,38 70,42' // Happy raised
+                },
+                good: {
+                    mouth: 'M 38,74 Q 50,82 62,74', // Nice smile
+                    teethShow: false,
+                    eyebrows: 'M 30,43 Q 38,40 46,43 M 54,43 Q 62,40 70,43' // Slightly raised
+                },
+                average: {
+                    mouth: 'M 38,76 L 62,76', // Neutral straight line
+                    teethShow: false,
+                    eyebrows: 'M 30,44 L 46,44 M 54,44 L 70,44' // Neutral
+                },
+                poor: {
+                    mouth: 'M 38,78 Q 50,72 62,78', // Slight frown
+                    teethShow: false,
+                    eyebrows: 'M 30,42 Q 38,45 46,42 M 54,42 Q 62,45 70,42' // Worried
+                },
+                terrible: {
+                    mouth: 'M 35,80 Q 50,68 65,80', // Big sad frown
+                    teethShow: false,
+                    eyebrows: 'M 30,40 Q 38,46 46,40 M 54,40 Q 62,46 70,40', // Very sad
+                    tears: true
+                }
+            };
+            const expr = expressions[tier];
+
+            const svg = `
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Turban - vibrant blue -->
+                    <ellipse cx="50" cy="25" rx="35" ry="20" fill="#1e40af"/>
+                    <ellipse cx="50" cy="28" rx="30" ry="15" fill="#2563eb"/>
+                    <path d="M 20,28 Q 50,10 80,28" stroke="#1e3a8a" stroke-width="3" fill="none"/>
+                    <circle cx="50" cy="18" r="5" fill="#fbbf24"/> <!-- Golden ornament -->
+
+                    <!-- Face - warm skin tone -->
+                    <ellipse cx="50" cy="55" rx="28" ry="32" fill="#deb887"/>
+
+                    <!-- Beard - distinguished gray -->
+                    <ellipse cx="50" cy="78" rx="22" ry="15" fill="#a0a0a0"/>
+                    <ellipse cx="50" cy="72" rx="18" ry="10" fill="#deb887"/>
+
+                    <!-- Eyebrows -->
+                    <path d="${expr.eyebrows}" stroke="#4a4a4a" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+                    <!-- Glasses - stylish black frames -->
+                    <circle cx="38" cy="52" r="11" stroke="#1f2937" stroke-width="2.5" fill="rgba(200,200,255,0.2)"/>
+                    <circle cx="62" cy="52" r="11" stroke="#1f2937" stroke-width="2.5" fill="rgba(200,200,255,0.2)"/>
+                    <line x1="49" y1="52" x2="51" y2="52" stroke="#1f2937" stroke-width="2.5"/>
+                    <line x1="27" y1="52" x2="18" y2="48" stroke="#1f2937" stroke-width="2"/>
+                    <line x1="73" y1="52" x2="82" y2="48" stroke="#1f2937" stroke-width="2"/>
+
+                    <!-- Eyes -->
+                    <circle cx="38" cy="52" r="4" fill="#2d1810"/>
+                    <circle cx="62" cy="52" r="4" fill="#2d1810"/>
+                    <circle cx="39" cy="51" r="1.5" fill="white"/> <!-- Eye shine -->
+                    <circle cx="63" cy="51" r="1.5" fill="white"/>
+
+                    ${expr.tears ? `
+                    <!-- Tears for terrible tier -->
+                    <ellipse cx="32" cy="62" rx="2" ry="4" fill="#60a5fa"/>
+                    <ellipse cx="68" cy="62" rx="2" ry="4" fill="#60a5fa"/>
+                    <ellipse cx="30" cy="70" rx="1.5" ry="3" fill="#60a5fa"/>
+                    <ellipse cx="70" cy="70" rx="1.5" ry="3" fill="#60a5fa"/>
+                    ` : ''}
+
+                    <!-- Mouth expression -->
+                    <path d="${expr.mouth}" stroke="#8b4513" stroke-width="2.5" fill="${expr.teethShow ? '#fff' : 'none'}" stroke-linecap="round"/>
+                    ${expr.teethShow ? '<path d="M 40,75 L 40,80 M 45,74 L 45,81 M 50,74 L 50,81 M 55,74 L 55,81 M 60,75 L 60,80" stroke="#ddd" stroke-width="1"/>' : ''}
+                </svg>
+            `;
+            return 'data:image/svg+xml,' + encodeURIComponent(svg);
+        }
+
+        function spawnMMSFaces(container, tier, count = 15) {
+            const svgUrl = createMMSSvg(tier);
+
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const face = document.createElement('div');
+                    face.className = `mms-face ${tier}`;
+                    face.style.backgroundImage = `url("${svgUrl}")`;
+                    face.style.left = Math.random() * 85 + 5 + 'vw';
+                    face.style.animationDuration = (Math.random() * 2 + 3) + 's';
+
+                    // Vary sizes
+                    const size = 60 + Math.random() * 50;
+                    face.style.width = size + 'px';
+                    face.style.height = size + 'px';
+
+                    container.appendChild(face);
+
+                    setTimeout(() => face.remove(), 5500);
+                }, i * 180);
+            }
+        }
+
+        function spawnConfetti(container, count = 50) {
+            const colors = ['#f39c12', '#e74c3c', '#4ade80', '#3b82f6', '#8b5cf6', '#ec4899', '#fbbf24'];
+
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    container.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), 4500);
+                }, i * 30);
+            }
+        }
+
+        // Sound Effects using Web Audio API
+        let audioContext = null;
+
+        function getAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+
+        function playNote(frequency, duration, type = 'sine', volume = 0.3, delay = 0) {
+            const ctx = getAudioContext();
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+
+            const startTime = ctx.currentTime + delay;
+            gainNode.gain.setValueAtTime(volume, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        }
+
+        function playFanfare() {
+            // Extended triumphant fanfare (~5+ seconds)
+            // Opening flourish
+            playNote(392, 0.2, 'square', 0.15, 0);       // G4
+            playNote(440, 0.2, 'square', 0.15, 0.15);    // A4
+            playNote(494, 0.2, 'square', 0.15, 0.3);     // B4
+
+            // Main fanfare theme
+            playNote(523, 0.3, 'square', 0.2, 0.5);      // C5
+            playNote(659, 0.3, 'square', 0.2, 0.8);      // E5
+            playNote(784, 0.3, 'square', 0.2, 1.1);      // G5
+            playNote(1047, 0.8, 'square', 0.25, 1.4);    // C6 (hold)
+
+            // Shimmer layer
+            playNote(1319, 0.6, 'sine', 0.12, 1.5);      // E6
+            playNote(1568, 0.6, 'sine', 0.1, 1.6);       // G6
+
+            // Second phrase - victory melody
+            playNote(1047, 0.25, 'square', 0.18, 2.3);   // C6
+            playNote(988, 0.25, 'square', 0.18, 2.55);   // B5
+            playNote(1047, 0.25, 'square', 0.18, 2.8);   // C6
+            playNote(1175, 0.5, 'square', 0.2, 3.05);    // D6
+            playNote(1319, 0.8, 'square', 0.22, 3.55);   // E6 (hold)
+
+            // Final triumphant chord
+            playNote(523, 1.2, 'sine', 0.15, 4.4);       // C5
+            playNote(659, 1.2, 'sine', 0.15, 4.4);       // E5
+            playNote(784, 1.2, 'sine', 0.15, 4.4);       // G5
+            playNote(1047, 1.2, 'sine', 0.18, 4.4);      // C6
+            playNote(1319, 1.2, 'sine', 0.12, 4.5);      // E6 sparkle
+        }
+
+        function playPositiveChime() {
+            // Extended happy chimes (~5+ seconds)
+            // Opening chimes
+            playNote(880, 0.4, 'sine', 0.2, 0);          // A5
+            playNote(1109, 0.4, 'sine', 0.2, 0.3);       // C#6
+            playNote(1319, 0.5, 'sine', 0.2, 0.6);       // E6
+
+            // Melodic phrase
+            playNote(1109, 0.3, 'sine', 0.18, 1.2);      // C#6
+            playNote(988, 0.3, 'sine', 0.18, 1.5);       // B5
+            playNote(880, 0.3, 'sine', 0.18, 1.8);       // A5
+            playNote(988, 0.5, 'sine', 0.2, 2.1);        // B5
+
+            // Second wave of chimes
+            playNote(1319, 0.4, 'sine', 0.18, 2.7);      // E6
+            playNote(1175, 0.4, 'sine', 0.18, 3.0);      // D6
+            playNote(1109, 0.4, 'sine', 0.18, 3.3);      // C#6
+            playNote(1319, 0.6, 'sine', 0.2, 3.6);       // E6
+
+            // Gentle ending
+            playNote(880, 0.8, 'sine', 0.12, 4.3);       // A5
+            playNote(1109, 0.8, 'sine', 0.12, 4.4);      // C#6
+            playNote(1319, 0.8, 'sine', 0.1, 4.5);       // E6
+        }
+
+        function playNeutralTone() {
+            // Extended thoughtful "hmm" (~5+ seconds)
+            // Opening contemplative tones
+            playNote(349, 0.6, 'triangle', 0.15, 0);     // F4
+            playNote(392, 0.6, 'triangle', 0.15, 0.5);   // G4
+            playNote(440, 0.8, 'triangle', 0.18, 1.0);   // A4
+
+            // Middle wandering phrase
+            playNote(494, 0.5, 'triangle', 0.15, 1.9);   // B4
+            playNote(440, 0.5, 'triangle', 0.15, 2.4);   // A4
+            playNote(392, 0.5, 'triangle', 0.15, 2.9);   // G4
+
+            // Return and settle
+            playNote(440, 0.6, 'triangle', 0.15, 3.5);   // A4
+            playNote(392, 0.8, 'triangle', 0.12, 4.1);   // G4
+            playNote(349, 1.0, 'triangle', 0.1, 4.8);    // F4 (fade out)
+        }
+
+        function playSadTrombone() {
+            // Extended sad trombone (~5+ seconds)
+            const ctx = getAudioContext();
+
+            // First "wah"
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.type = 'sawtooth';
+            gain1.gain.setValueAtTime(0.18, ctx.currentTime);
+            osc1.frequency.setValueAtTime(311, ctx.currentTime);
+            osc1.frequency.linearRampToValueAtTime(293, ctx.currentTime + 0.6);
+            gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+            osc1.start(ctx.currentTime);
+            osc1.stop(ctx.currentTime + 0.9);
+
+            // Second "wah"
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.type = 'sawtooth';
+            gain2.gain.setValueAtTime(0.18, ctx.currentTime + 1.0);
+            osc2.frequency.setValueAtTime(293, ctx.currentTime + 1.0);
+            osc2.frequency.linearRampToValueAtTime(277, ctx.currentTime + 1.6);
+            gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.8);
+            osc2.start(ctx.currentTime + 1.0);
+            osc2.stop(ctx.currentTime + 1.9);
+
+            // Third long "wahhhhh" (descending)
+            const osc3 = ctx.createOscillator();
+            const gain3 = ctx.createGain();
+            osc3.connect(gain3);
+            gain3.connect(ctx.destination);
+            osc3.type = 'sawtooth';
+            gain3.gain.setValueAtTime(0.2, ctx.currentTime + 2.1);
+            osc3.frequency.setValueAtTime(277, ctx.currentTime + 2.1);
+            osc3.frequency.linearRampToValueAtTime(185, ctx.currentTime + 3.5);
+            gain3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 3.8);
+            osc3.start(ctx.currentTime + 2.1);
+            osc3.stop(ctx.currentTime + 4.0);
+
+            // Final defeated low note
+            const osc4 = ctx.createOscillator();
+            const gain4 = ctx.createGain();
+            osc4.connect(gain4);
+            gain4.connect(ctx.destination);
+            osc4.type = 'sawtooth';
+            gain4.gain.setValueAtTime(0.15, ctx.currentTime + 4.2);
+            osc4.frequency.setValueAtTime(147, ctx.currentTime + 4.2);
+            osc4.frequency.linearRampToValueAtTime(110, ctx.currentTime + 5.5);
+            gain4.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 5.8);
+            osc4.start(ctx.currentTime + 4.2);
+            osc4.stop(ctx.currentTime + 6.0);
+        }
+
+        function playCrash() {
+            // Extended crash/disaster sound (~5+ seconds)
+            const ctx = getAudioContext();
+
+            // Initial impact crash
+            const bufferSize1 = ctx.sampleRate * 1.5;
+            const buffer1 = ctx.createBuffer(1, bufferSize1, ctx.sampleRate);
+            const data1 = buffer1.getChannelData(0);
+            for (let i = 0; i < bufferSize1; i++) {
+                data1[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize1 * 0.2));
+            }
+            const noise1 = ctx.createBufferSource();
+            noise1.buffer = buffer1;
+            const filter1 = ctx.createBiquadFilter();
+            filter1.type = 'highpass';
+            filter1.frequency.value = 1500;
+            const gain1 = ctx.createGain();
+            gain1.gain.setValueAtTime(0.35, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5);
+            noise1.connect(filter1);
+            filter1.connect(gain1);
+            gain1.connect(ctx.destination);
+            noise1.start(ctx.currentTime);
+
+            // Low rumble/thud
+            playNote(60, 1.0, 'sine', 0.3, 0);
+            playNote(50, 1.2, 'sine', 0.25, 0.2);
+
+            // Secondary debris falling
+            const bufferSize2 = ctx.sampleRate * 2;
+            const buffer2 = ctx.createBuffer(1, bufferSize2, ctx.sampleRate);
+            const data2 = buffer2.getChannelData(0);
+            for (let i = 0; i < bufferSize2; i++) {
+                data2[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize2 * 0.4)) * 0.5;
+            }
+            const noise2 = ctx.createBufferSource();
+            noise2.buffer = buffer2;
+            const filter2 = ctx.createBiquadFilter();
+            filter2.type = 'bandpass';
+            filter2.frequency.value = 3000;
+            const gain2 = ctx.createGain();
+            gain2.gain.setValueAtTime(0.2, ctx.currentTime + 1.2);
+            gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 3.0);
+            noise2.connect(filter2);
+            filter2.connect(gain2);
+            gain2.connect(ctx.destination);
+            noise2.start(ctx.currentTime + 1.2);
+
+            // Ominous low drone
+            playNote(55, 2.0, 'sawtooth', 0.1, 2.5);
+            playNote(52, 2.5, 'sine', 0.15, 3.0);
+
+            // Final settling debris
+            const bufferSize3 = ctx.sampleRate * 1.5;
+            const buffer3 = ctx.createBuffer(1, bufferSize3, ctx.sampleRate);
+            const data3 = buffer3.getChannelData(0);
+            for (let i = 0; i < bufferSize3; i++) {
+                data3[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize3 * 0.3)) * 0.3;
+            }
+            const noise3 = ctx.createBufferSource();
+            noise3.buffer = buffer3;
+            const filter3 = ctx.createBiquadFilter();
+            filter3.type = 'highpass';
+            filter3.frequency.value = 2500;
+            const gain3 = ctx.createGain();
+            gain3.gain.setValueAtTime(0.12, ctx.currentTime + 3.8);
+            gain3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 5.5);
+            noise3.connect(filter3);
+            filter3.connect(gain3);
+            gain3.connect(ctx.destination);
+            noise3.start(ctx.currentTime + 3.8);
+        }
+
+        function playScoreSound(tier) {
+            try {
+                switch(tier) {
+                    case 'elite':
+                        playFanfare();
+                        break;
+                    case 'good':
+                        playPositiveChime();
+                        break;
+                    case 'average':
+                        playNeutralTone();
+                        break;
+                    case 'poor':
+                        playSadTrombone();
+                        break;
+                    case 'terrible':
+                        playCrash();
+                        break;
+                }
+            } catch (e) {
+                console.log('Audio not supported:', e);
+            }
+        }
+
+        function triggerCelebration(tier) {
+            const container = createParticleContainer();
+
+            // Play sound effect for this tier
+            playScoreSound(tier);
+
+            // Spawn MMS faces for all tiers
+            const faceCounts = {
+                elite: 20,
+                good: 15,
+                average: 10,
+                poor: 12,
+                terrible: 15
+            };
+
+            spawnMMSFaces(container, tier, faceCounts[tier]);
+
+            // Additional effects based on tier
+            if (tier === 'elite' || tier === 'good') {
+                spawnConfetti(container, tier === 'elite' ? 60 : 30);
+            }
+
+            if (tier === 'poor' || tier === 'terrible') {
+                // Red flash for bad scores
+                const overlay = document.createElement('div');
+                overlay.className = 'disaster-overlay';
+                document.body.appendChild(overlay);
+                setTimeout(() => overlay.remove(), 1000);
+
+                // Screen shake
+                document.body.classList.add('screen-shake');
+                setTimeout(() => document.body.classList.remove('screen-shake'), 700);
+
+                if (tier === 'terrible') {
+                    // Extra shake for terrible
+                    setTimeout(() => {
+                        document.body.classList.add('screen-shake');
+                        setTimeout(() => document.body.classList.remove('screen-shake'), 700);
+                    }, 800);
+                }
+            }
+
+            // Clean up container after animations
+            setTimeout(() => container.remove(), 6000);
+        }
+
+        // Initialize
+        function init() {
+            const container = document.getElementById('sliders-container');
+            container.innerHTML = '';
+
+            categories.forEach(cat => {
+                // Start with 0 allocation
+                userAllocations[cat.id] = 0;
+
+                const sliderHtml = `
+                    <div class="slider-item">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <span class="slider-icon">${cat.icon}</span>
+                                <span class="slider-name">${cat.name}</span>
+                                ${cat.note ? `<span style="font-size: 0.8rem; color: #666;">(${cat.note})</span>` : ''}
+                            </div>
+                            <div class="slider-value">
+                                <div class="slider-amount" id="amount-${cat.id}">₹0</div>
+                                <div class="slider-percent" id="percent-${cat.id}">0%</div>
+                            </div>
+                        </div>
+                        <input
+                            type="range"
+                            id="slider-${cat.id}"
+                            min="0"
+                            max="${TOTAL_BUDGET}"
+                            value="0"
+                            step="10000"
+                            oninput="updateSlider('${cat.id}', this.value)"
+                        >
+                    </div>
+                `;
+                container.innerHTML += sliderHtml;
+            });
+
+            updateRemaining();
+        }
+
+        function formatLakhCrore(crore) {
+            const lakhCrore = crore / 100000;
+            if (lakhCrore >= 1) {
+                return lakhCrore.toFixed(2) + ' L Cr';
+            } else {
+                return (crore / 1000).toFixed(1) + 'K Cr';
+            }
+        }
+
+        function getPercent(value) {
+            return ((value / TOTAL_BUDGET) * 100).toFixed(1);
+        }
+
+        function updateSlider(id, value) {
+            const newValue = parseInt(value);
+            const currentTotal = Object.values(userAllocations).reduce((a, b) => a + b, 0);
+            const otherTotal = currentTotal - userAllocations[id];
+            const maxAllowed = TOTAL_BUDGET - otherTotal;
+
+            // Prevent going over 100%
+            if (newValue > maxAllowed) {
+                // Reset slider to max allowed
+                document.getElementById(`slider-${id}`).value = maxAllowed;
+                userAllocations[id] = maxAllowed;
+                document.getElementById(`amount-${id}`).textContent = '₹' + formatLakhCrore(maxAllowed);
+                document.getElementById(`percent-${id}`).textContent = getPercent(maxAllowed) + '%';
+                showWarning();
+            } else {
+                userAllocations[id] = newValue;
+                document.getElementById(`amount-${id}`).textContent = '₹' + formatLakhCrore(newValue);
+                document.getElementById(`percent-${id}`).textContent = getPercent(newValue) + '%';
+                hideWarning();
+            }
+            updateRemaining();
+        }
+
+        function showWarning() {
+            const warningEl = document.getElementById('warning-message');
+            warningEl.style.display = 'block';
+            // Hide after 3 seconds
+            setTimeout(() => {
+                warningEl.style.display = 'none';
+            }, 3000);
+        }
+
+        function hideWarning() {
+            document.getElementById('warning-message').style.display = 'none';
+        }
+
+        function updateRemaining() {
+            const total = Object.values(userAllocations).reduce((a, b) => a + b, 0);
+            const remaining = TOTAL_BUDGET - total;
+
+            const allocatedEl = document.getElementById('total-allocated');
+            const remainingEl = document.getElementById('remaining-amount');
+
+            // Update allocated amount
+            allocatedEl.textContent = '₹' + formatLakhCrore(total);
+
+            // Update remaining amount
+            if (remaining > 0) {
+                remainingEl.textContent = '₹' + formatLakhCrore(remaining);
+                remainingEl.className = 'budget-stat-value remaining';
+            } else if (remaining === 0) {
+                remainingEl.textContent = '₹0 - Perfect!';
+                remainingEl.className = 'budget-stat-value remaining zero';
+            } else {
+                remainingEl.textContent = '₹' + formatLakhCrore(Math.abs(remaining)) + ' over!';
+                remainingEl.className = 'budget-stat-value remaining negative';
+            }
+
+            // Update mobile ticker
+            updateMobileTicker(total, remaining);
+        }
+
+        function updateMobileTicker(total, remaining) {
+            const tickerAllocated = document.getElementById('ticker-allocated');
+            const tickerRemaining = document.getElementById('ticker-remaining');
+            const tickerBarFill = document.getElementById('ticker-bar-fill');
+            const tickerPercent = document.getElementById('ticker-percent');
+
+            // Calculate percentage
+            const percent = Math.min((total / TOTAL_BUDGET) * 100, 100);
+            const isOver = total > TOTAL_BUDGET;
+
+            // Update allocated
+            tickerAllocated.textContent = '₹' + formatLakhCrore(total);
+
+            // Update remaining
+            if (remaining > 0) {
+                tickerRemaining.textContent = '₹' + formatLakhCrore(remaining);
+                tickerRemaining.className = 'ticker-value remaining';
+            } else if (remaining === 0) {
+                tickerRemaining.textContent = 'Perfect!';
+                tickerRemaining.className = 'ticker-value remaining zero';
+            } else {
+                tickerRemaining.textContent = '+₹' + formatLakhCrore(Math.abs(remaining));
+                tickerRemaining.className = 'ticker-value remaining negative';
+            }
+
+            // Update progress bar
+            tickerBarFill.style.width = Math.min(percent, 100) + '%';
+            tickerBarFill.className = isOver ? 'ticker-bar-fill over' : 'ticker-bar-fill';
+
+            // Update percent text
+            tickerPercent.textContent = Math.round(percent) + '% allocated';
+        }
+
+        function showResults() {
+            document.getElementById('allocation-section').style.display = 'none';
+            document.getElementById('results-section').classList.add('show');
+            document.getElementById('mobile-ticker').style.display = 'none';
+            generateResults();
+            window.scrollTo(0, 0);
+        }
+
+        function generateResults() {
+            const insights = [];
+            let biggestOverspend = null;
+            let biggestUnderspend = null;
+            let maxOverRatio = 0;
+            let maxUnderRatio = 0;
+
+            categories.forEach(cat => {
+                const userAmount = userAllocations[cat.id];
+                const actualAmount = cat.actual;
+                const ratio = userAmount / actualAmount;
+
+                const insight = {
+                    ...cat,
+                    userAmount,
+                    actualAmount,
+                    ratio,
+                    userPercent: getPercent(userAmount),
+                    actualPercent: getPercent(actualAmount)
+                };
+
+                if (ratio >= 2) {
+                    insight.type = 'more';
+                    insight.multiplier = ratio.toFixed(1) + 'x more';
+                    if (ratio > maxOverRatio) {
+                        maxOverRatio = ratio;
+                        biggestOverspend = insight;
+                    }
+                } else if (ratio <= 0.5) {
+                    insight.type = 'less';
+                    insight.multiplier = (1/ratio).toFixed(1) + 'x less';
+                    if (1/ratio > maxUnderRatio) {
+                        maxUnderRatio = 1/ratio;
+                        biggestUnderspend = insight;
+                    }
+                } else {
+                    insight.type = 'same';
+                    insight.multiplier = 'Similar';
+                }
+
+                insights.push(insight);
+            });
+
+            // Sort by difference magnitude
+            insights.sort((a, b) => Math.abs(a.ratio - 1) > Math.abs(b.ratio - 1) ? -1 : 1);
+
+            // Calculate and display score
+            const score = calculateScore();
+            const tier = getScoreTier(score);
+            const title = getRandomTitle(tier);
+
+            const scoreEl = document.getElementById('score-display');
+            scoreEl.className = 'score-display ' + tier;
+            scoreEl.innerHTML = `
+                <div class="score-label">Your Finance Minister Score</div>
+                <div class="score-number">${score}</div>
+                <div class="score-title">${title}</div>
+                <div class="score-subtitle">Based on how closely you matched the actual budget</div>
+                <div class="community-stats" id="community-stats">
+                    <div class="community-stat full-width">
+                        <div class="percentile-text stats-loading" id="percentile-value">Calculating...</div>
+                    </div>
+                    <div class="community-stat">
+                        <div class="community-stat-value stats-loading" id="total-players">--</div>
+                        <div class="community-stat-label">Games played</div>
+                    </div>
+                </div>
+            `;
+
+            // Save score and get stats from Firebase
+            saveScoreAndGetStats(score);
+
+            // Trigger celebration/disaster animation
+            setTimeout(() => triggerCelebration(tier), 300);
+
+            // Generate summary stats
+            const summaryEl = document.getElementById('summary-stats');
+            const moreCount = insights.filter(i => i.type === 'more').length;
+            const lessCount = insights.filter(i => i.type === 'less').length;
+            const sameCount = insights.filter(i => i.type === 'same').length;
+
+            summaryEl.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${moreCount}</div>
+                    <div class="stat-label">Your priorities</div>
+                    <div class="stat-sublabel">Where you spent 2x+ more than govt</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${lessCount}</div>
+                    <div class="stat-label">Govt's priorities</div>
+                    <div class="stat-sublabel">Where govt spent 2x+ more than you</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${sameCount}</div>
+                    <div class="stat-label">Aligned</div>
+                    <div class="stat-sublabel">Similar allocation priorities</div>
+                </div>
+            `;
+
+            // Generate dynamic surprise facts based on user's allocations
+            const surpriseEl = document.getElementById('surprise-fact');
+            const surpriseFacts = [];
+
+            // Get specific insights
+            const interestInsight = insights.find(i => i.id === 'interest');
+            const healthInsight = insights.find(i => i.id === 'health');
+            const educationInsight = insights.find(i => i.id === 'education');
+            const defenceInsight = insights.find(i => i.id === 'defence');
+            const subsidyInsight = insights.find(i => i.id === 'subsidy');
+            const transportInsight = insights.find(i => i.id === 'transport');
+            const pensionInsight = insights.find(i => i.id === 'pension');
+            const agriRuralInsight = insights.find(i => i.id === 'agri_rural');
+            const homeInsight = insights.find(i => i.id === 'home');
+
+            // Fact 1: Interest vs Health+Education (if user underestimated interest)
+            if (interestInsight && interestInsight.ratio < 0.8) {
+                const healthEducationCombined = healthInsight.actualAmount + educationInsight.actualAmount;
+                surpriseFacts.push({
+                    icon: '💳',
+                    title: 'The Debt Burden',
+                    text: `India spends <strong>₹${formatLakhCrore(interestInsight.actualAmount)}</strong> (${getPercent(interestInsight.actualAmount)}%) just on <strong>interest payments</strong> for past loans. That's more than Health + Education combined (₹${formatLakhCrore(healthEducationCombined)})!`,
+                    relevance: Math.abs(interestInsight.ratio - 1)
+                });
+            }
+
+            // Fact 2: Defence spending comparison (if user allocated very differently)
+            if (defenceInsight && (defenceInsight.ratio >= 2 || defenceInsight.ratio <= 0.5)) {
+                surpriseFacts.push({
+                    icon: '🛡️',
+                    title: 'Defence Reality',
+                    text: `India has the <strong>4th largest defence budget</strong> in the world at ₹${formatLakhCrore(defenceInsight.actualAmount)}. That's more than the UK and France! You allocated ${defenceInsight.ratio >= 2 ? 'even more' : 'much less'}.`,
+                    relevance: Math.abs(defenceInsight.ratio - 1)
+                });
+            }
+
+            // Fact 3: Healthcare spending (if user allocated more to health)
+            if (healthInsight && healthInsight.ratio >= 1.5) {
+                surpriseFacts.push({
+                    icon: '🏥',
+                    title: 'You Prioritized Health',
+                    text: `You allocated <strong>${healthInsight.multiplier || healthInsight.ratio.toFixed(1) + 'x'}</strong> to healthcare. India's public health spending is only <strong>~2% of GDP</strong> - one of the lowest among G20 nations. Many economists agree with your priority!`,
+                    relevance: healthInsight.ratio
+                });
+            }
+
+            // Fact 4: Education spending (if user allocated more)
+            if (educationInsight && educationInsight.ratio >= 1.5) {
+                surpriseFacts.push({
+                    icon: '📚',
+                    title: 'Investing in the Future',
+                    text: `You allocated <strong>${educationInsight.multiplier || educationInsight.ratio.toFixed(1) + 'x'}</strong> to education. The NEP 2020 recommends <strong>6% of GDP</strong> for education, but India currently spends only ~3%. You're thinking long-term!`,
+                    relevance: educationInsight.ratio
+                });
+            }
+
+            // Fact 5: Subsidies (if user allocated very differently)
+            if (subsidyInsight && (subsidyInsight.ratio >= 2 || subsidyInsight.ratio <= 0.5)) {
+                surpriseFacts.push({
+                    icon: '🌾',
+                    title: 'The Subsidy Question',
+                    text: `India spends ₹${formatLakhCrore(subsidyInsight.actualAmount)} on subsidies (food, fuel, fertiliser). This keeps essentials affordable for 800M+ people, but economists debate if direct cash transfers would be more efficient.`,
+                    relevance: Math.abs(subsidyInsight.ratio - 1)
+                });
+            }
+
+            // Fact 6: Transport/Infrastructure (if user allocated more)
+            if (transportInsight && transportInsight.ratio >= 1.5) {
+                surpriseFacts.push({
+                    icon: '🚆',
+                    title: 'Infrastructure Push',
+                    text: `You prioritized transport infrastructure! India is building <strong>28 km of highways daily</strong> and investing heavily in railways. Infrastructure drives GDP growth - you're thinking like an economist!`,
+                    relevance: transportInsight.ratio
+                });
+            }
+
+            // Fact 7: Pension (if user allocated very differently)
+            if (pensionInsight && pensionInsight.ratio >= 2) {
+                surpriseFacts.push({
+                    icon: '👴',
+                    title: 'The Pension Bill',
+                    text: `You allocated ${pensionInsight.ratio.toFixed(1)}x more to pensions. India's pension bill is already ₹${formatLakhCrore(pensionInsight.actualAmount)} - that's <strong>${getPercent(pensionInsight.actualAmount)}%</strong> of the budget! The Old Pension Scheme debate makes this a hot political topic.`,
+                    relevance: pensionInsight.ratio
+                });
+            }
+
+            // Fact 8: Agriculture & Rural (if user allocated more)
+            if (agriRuralInsight && agriRuralInsight.ratio >= 1.5) {
+                surpriseFacts.push({
+                    icon: '🌾',
+                    title: 'Rural Champion',
+                    text: `You prioritized agriculture & rural development! With <strong>42% of Indians</strong> working in agriculture and <strong>65% living in villages</strong>, you're focusing on the backbone of India's economy.`,
+                    relevance: agriRuralInsight.ratio
+                });
+            }
+
+            // Fact 9: Home Affairs (if user allocated very differently)
+            if (homeInsight && (homeInsight.ratio >= 2 || homeInsight.ratio <= 0.5)) {
+                surpriseFacts.push({
+                    icon: '🏛️',
+                    title: 'Internal Security',
+                    text: `India spends ₹${formatLakhCrore(homeInsight.actualAmount)} on Home Affairs - covering <strong>police, CRPF, border security</strong>, and internal administration. You allocated ${homeInsight.ratio >= 2 ? 'even more' : 'much less'}.`,
+                    relevance: Math.abs(homeInsight.ratio - 1)
+                });
+            }
+
+            // Fact 10: User matched government well
+            if (sameCount >= 7) {
+                surpriseFacts.push({
+                    icon: '🎯',
+                    title: 'Finance Minister Material!',
+                    text: `You matched the government's allocation in <strong>${sameCount} out of 10 categories</strong>. Either you've studied the budget, or you have great intuition for fiscal policy!`,
+                    relevance: sameCount / 10
+                });
+            }
+
+            // Fact 11: Biggest overspend insight
+            if (biggestOverspend && biggestOverspend.id !== 'others') {
+                surpriseFacts.push({
+                    icon: '💚',
+                    title: 'Your Top Priority',
+                    text: `You would spend <strong>${biggestOverspend.multiplier}</strong> on <strong>${biggestOverspend.name}</strong> compared to the actual budget. Your allocation: ${biggestOverspend.userPercent}% vs Government: ${biggestOverspend.actualPercent}%.`,
+                    relevance: biggestOverspend.ratio
+                });
+            }
+
+            // Fact 12: Biggest underspend insight
+            if (biggestUnderspend && biggestUnderspend.id !== 'others' && biggestUnderspend.id !== 'interest') {
+                surpriseFacts.push({
+                    icon: '🤔',
+                    title: 'Interesting Choice',
+                    text: `You allocated <strong>${biggestUnderspend.multiplier}</strong> to <strong>${biggestUnderspend.name}</strong>. The government actually spends ₹${formatLakhCrore(biggestUnderspend.actualAmount)} (${biggestUnderspend.actualPercent}%) on this!`,
+                    relevance: 1 / biggestUnderspend.ratio
+                });
+            }
+
+            // Sort by relevance and pick the most relevant fact
+            surpriseFacts.sort((a, b) => b.relevance - a.relevance);
+
+            if (surpriseFacts.length > 0) {
+                const fact = surpriseFacts[0];
+                surpriseEl.innerHTML = `
+                    <h3>${fact.icon} ${fact.title}</h3>
+                    <p>${fact.text}</p>
+                `;
+            } else {
+                surpriseEl.innerHTML = `
+                    <h3>📊 Budget Breakdown</h3>
+                    <p>The Union Budget is a complex balancing act between development needs, welfare programs, debt obligations, and political priorities. Your allocation shows your personal values!</p>
+                `;
+            }
+
+            // Generate insight cards - only show EXTREME differences (2x or more)
+            const insightsContainer = document.getElementById('insights-container');
+            insightsContainer.innerHTML = '';
+
+            // Filter for extreme differences only (ratio > 2 or ratio < 0.5)
+            const extremeInsights = insights.filter(i => i.ratio >= 2 || i.ratio <= 0.5);
+
+            // Add logic explanation header
+            if (extremeInsights.length > 0) {
+                insightsContainer.innerHTML = `
+                    <div class="insights-logic">
+                        <span class="logic-icon">🎯</span>
+                        <span class="logic-text">Showing categories where your allocation differs by <strong>2x or more</strong> from the actual budget</span>
+                    </div>
+                `;
+            } else {
+                insightsContainer.innerHTML = `
+                    <div class="insights-logic success">
+                        <span class="logic-icon">🎉</span>
+                        <span class="logic-text">Great job! None of your allocations differ by more than 2x from the actual budget. You think like a Finance Minister!</span>
+                    </div>
+                `;
+            }
+
+            extremeInsights.forEach(insight => {
+                let message = '';
+
+                if (insight.type === 'more') {
+                    message = generateMoreMessage(insight);
+                } else if (insight.type === 'less') {
+                    message = generateLessMessage(insight);
+                } else {
+                    message = `You allocated almost the same as the government. You think like a Finance Minister! 🎯`;
+                }
+
+                const cardHtml = `
+                    <div class="insight-card ${insight.type}" onclick="showBudgetPopup('${insight.id}')">
+                        <div class="insight-category">
+                            <span class="insight-icon">${insight.icon}</span>
+                            <span class="insight-name">${insight.name}</span>
+                            <span class="multiplier ${insight.type}">${insight.multiplier}</span>
+                        </div>
+                        <div class="bar-comparison">
+                            <div class="bar-row">
+                                <span class="bar-label">You</span>
+                                <div class="bar-container">
+                                    <div class="bar-fill you" style="width: ${Math.min(insight.userPercent * 3, 100)}%"></div>
+                                </div>
+                                <span class="bar-percent">${insight.userPercent}%</span>
+                            </div>
+                            <div class="bar-row">
+                                <span class="bar-label">India</span>
+                                <div class="bar-container">
+                                    <div class="bar-fill actual" style="width: ${Math.min(insight.actualPercent * 3, 100)}%"></div>
+                                </div>
+                                <span class="bar-percent">${insight.actualPercent}%</span>
+                            </div>
+                        </div>
+                        <div class="insight-message">${message}</div>
+                        <div class="insight-card-link">Learn about ${insight.name} Budget 2026-27 →</div>
+                    </div>
+                `;
+                insightsContainer.innerHTML += cardHtml;
+            });
+        }
+
+        function generateMoreMessage(insight) {
+            const messages = {
+                'health': `You spent <strong>${insight.multiplier}</strong> on healthcare than the government. India's public health spending is only ~2% of GDP - one of the lowest among major economies. Many experts agree with you!`,
+                'education': `You allocated <strong>${insight.multiplier}</strong> to education. India spends about 3% of GDP on education vs the recommended 6%. You're prioritizing the future!`,
+                'defence': `You spent <strong>${insight.multiplier}</strong> on defence. India already has the 4th largest defence budget globally. You're prioritizing security!`,
+                'agri_rural': `You allocated <strong>${insight.multiplier}</strong> to agriculture & rural development. With 42% of India's workforce in farming and 65% living in rural areas, many argue this sector deserves more investment.`,
+                'subsidy': `You spent <strong>${insight.multiplier}</strong> on subsidies. These help keep food, fuel and fertiliser affordable for millions.`,
+                'transport': `You allocated <strong>${insight.multiplier}</strong> to transport. Better roads and railways do boost economic growth!`,
+                'interest': `You allocated <strong>${insight.multiplier}</strong> to interest payments. Unfortunately, this isn't really a choice - it's mandatory debt servicing!`,
+                'pension': `You spent <strong>${insight.multiplier}</strong> on pensions. Government employees do deserve retirement security! The Old Pension Scheme debate makes this politically sensitive.`,
+                'home': `You allocated <strong>${insight.multiplier}</strong> to home affairs. Internal security, police, and border protection are important!`,
+                'others': `You spent <strong>${insight.multiplier}</strong> on other categories including urban development, IT, energy, commerce, and scientific research.`
+            };
+            return messages[insight.id] || `You spent <strong>${insight.multiplier}</strong> than the government on this category.`;
+        }
+
+        function generateLessMessage(insight) {
+            const messages = {
+                'health': `You allocated <strong>${insight.multiplier}</strong> than the government. Even so, many argue India's healthcare spending should be even higher!`,
+                'education': `You spent <strong>${insight.multiplier}</strong> than the government. Education funding is actually a hot debate in policy circles!`,
+                'defence': `You allocated <strong>${insight.multiplier}</strong> than the government. With neighbors like China and Pakistan, India maintains a significant defence budget.`,
+                'agri_rural': `You spent <strong>${insight.multiplier}</strong> than the government on agriculture & rural. With a large rural voting population, this sector gets significant attention.`,
+                'subsidy': `You allocated <strong>${insight.multiplier}</strong> to subsidies. Cutting subsidies is politically difficult as it affects poor families.`,
+                'transport': `You spent <strong>${insight.multiplier}</strong> on transport. Infrastructure is a key growth driver the government prioritizes.`,
+                'interest': `You allocated <strong>${insight.multiplier}</strong> to interest payments. <strong>Reality check:</strong> This isn't optional! India MUST pay ₹14 lakh crore in interest on past loans. This is the government's biggest expense!`,
+                'pension': `You spent <strong>${insight.multiplier}</strong> on pensions. Pension obligations are fixed commitments that can't easily be reduced.`,
+                'home': `You allocated <strong>${insight.multiplier}</strong> to home affairs. This covers police, CRPF, borders, and internal security - essential services.`,
+                'others': `You spent <strong>${insight.multiplier}</strong> on other categories. This includes urban development, energy, IT, commerce, and many essential government services.`
+            };
+            return messages[insight.id] || `You spent <strong>${insight.multiplier}</strong> than the government on this category.`;
+        }
+
+        function resetGame() {
+            document.getElementById('results-section').classList.remove('show');
+            document.getElementById('allocation-section').style.display = 'block';
+            document.getElementById('score-display').className = 'score-display';
+            // Show mobile ticker again
+            document.getElementById('mobile-ticker').style.display = '';
+            // Remove any lingering effects
+            const particles = document.querySelector('.particle-container');
+            if (particles) particles.remove();
+            const overlay = document.querySelector('.disaster-overlay');
+            if (overlay) overlay.remove();
+            const stamp = document.querySelector('.disaster-stamp');
+            if (stamp) stamp.remove();
+            document.body.classList.remove('screen-shake');
+            init();
+            window.scrollTo(0, 0);
+        }
+
+        function shareResults() {
+            // Generate share text
+            const score = calculateScore();
+            const tier = getScoreTier(score);
+            const title = getRandomTitle(tier);
+
+            const moreItems = categories.filter(c => userAllocations[c.id] / c.actual >= 2);
+            const lessItems = categories.filter(c => userAllocations[c.id] / c.actual <= 0.5);
+
+            let shareText = "🇮🇳 I played 'If You Were Finance Minister'\n\n";
+            shareText += `My Score: ${score}/100\n`;
+            shareText += `Title: "${title}"\n\n`;
+
+            if (moreItems.length > 0) {
+                shareText += "I'd spend MORE on: " + moreItems.map(c => c.name).slice(0, 3).join(", ") + "\n";
+            }
+            if (lessItems.length > 0) {
+                shareText += "I'd spend LESS on: " + lessItems.map(c => c.name).slice(0, 3).join(", ") + "\n";
+            }
+
+            shareText += "\nTry it yourself! 👆";
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'If You Were Finance Minister',
+                    text: shareText,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(shareText + "\n" + window.location.href);
+                alert("Copied to clipboard! Share it with your friends.");
+            }
+        }
+
+        // Initialize on load
+        init();
+    </script>
+
+    <!-- Mobile Allocation Ticker -->
+    <div class="mobile-ticker" id="mobile-ticker">
+        <div class="ticker-item">
+            <span class="ticker-label">Allocated</span>
+            <span class="ticker-value allocated" id="ticker-allocated">₹0</span>
+        </div>
+        <div class="ticker-progress">
+            <div class="ticker-bar">
+                <div class="ticker-bar-fill" id="ticker-bar-fill" style="width: 0%"></div>
+            </div>
+            <span class="ticker-percent" id="ticker-percent">0%</span>
+        </div>
+        <div class="ticker-item">
+            <span class="ticker-label">Remaining</span>
+            <span class="ticker-value remaining" id="ticker-remaining">₹53L Cr</span>
+        </div>
+    </div>
+</body>
+</html>
