@@ -1378,33 +1378,32 @@
         // Save score and get community stats
         async function saveScoreAndGetStats(score) {
             try {
-                // Save this score
-                await db.collection('scores').add({
-                    score: score,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                const statsRef = db.collection('stats').doc('global');
 
-                // Get all scores to calculate percentile
-                const snapshot = await db.collection('scores').get();
-                const allScores = [];
-                snapshot.forEach(doc => {
-                    allScores.push(doc.data().score);
-                });
+                // Increment aggregate counters: 1 write regardless of player count
+                await statsRef.set({
+                    totalPlayers: firebase.firestore.FieldValue.increment(1),
+                    [`scoreDistribution.${score}`]: firebase.firestore.FieldValue.increment(1)
+                }, { merge: true });
 
-                // Calculate percentile
-                const totalPlayers = allScores.length;
-                const scoresBelow = allScores.filter(s => s < score).length;
+                // Read the updated aggregate: 1 read regardless of player count
+                const statsDoc = await statsRef.get();
+                const data = statsDoc.data() || {};
+
+                const totalPlayers = data.totalPlayers || 1;
+                const distribution = data.scoreDistribution || {};
+                let scoresBelow = 0;
+                for (const [s, count] of Object.entries(distribution)) {
+                    if (parseInt(s) < score) scoresBelow += count;
+                }
                 const percentile = Math.round((scoresBelow / totalPlayers) * 100);
 
-                // Update UI
                 const percentileEl = document.getElementById('percentile-value');
                 const totalPlayersEl = document.getElementById('total-players');
 
                 if (percentileEl) {
                     percentileEl.textContent = `You beat ${percentile}% of players`;
                     percentileEl.classList.remove('stats-loading');
-
-                    // Add color class based on percentile
                     if (percentile >= 95) {
                         percentileEl.classList.add('top-5');
                     } else if (percentile >= 90) {
@@ -1418,11 +1417,10 @@
                 }
 
             } catch (error) {
-                console.error('Error saving score:', error);
-                // Show fallback if Firebase fails
+                console.error('Firebase error:', error);
                 const percentileEl = document.getElementById('percentile-value');
                 const totalPlayersEl = document.getElementById('total-players');
-                if (percentileEl) percentileEl.textContent = '--';
+                if (percentileEl) percentileEl.textContent = 'Stats unavailable';
                 if (totalPlayersEl) totalPlayersEl.textContent = '--';
             }
         }
