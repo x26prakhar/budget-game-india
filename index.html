@@ -1360,6 +1360,24 @@
         </div>
     </div>
 
+    <!-- Mobile Allocation Ticker (must come before the script, which updates it on init) -->
+    <div class="mobile-ticker" id="mobile-ticker">
+        <div class="ticker-item">
+            <span class="ticker-label">Allocated</span>
+            <span class="ticker-value allocated" id="ticker-allocated">₹0</span>
+        </div>
+        <div class="ticker-progress">
+            <div class="ticker-bar">
+                <div class="ticker-bar-fill" id="ticker-bar-fill" style="width: 0%"></div>
+            </div>
+            <span class="ticker-percent" id="ticker-percent">0%</span>
+        </div>
+        <div class="ticker-item">
+            <span class="ticker-label">Remaining</span>
+            <span class="ticker-value remaining" id="ticker-remaining">₹53L Cr</span>
+        </div>
+    </div>
+
     <script>
         // Firebase Configuration
         const firebaseConfig = {
@@ -1382,9 +1400,10 @@
                 const statsRef = db.collection('stats').doc('global');
 
                 // Increment aggregate counters: 1 write regardless of player count
+                // Nested object, not a dotted key: set() stores dotted keys as literal field names
                 await statsRef.set({
                     totalPlayers: firebase.firestore.FieldValue.increment(1),
-                    [`scoreDistribution.${score}`]: firebase.firestore.FieldValue.increment(1)
+                    scoreDistribution: { [score]: firebase.firestore.FieldValue.increment(1) }
                 }, { merge: true });
 
                 // Read the updated aggregate: 1 read regardless of player count
@@ -1392,7 +1411,17 @@
                 const data = statsDoc.data() || {};
 
                 const totalPlayers = data.totalPlayers || 1;
-                const distribution = data.scoreDistribution || {};
+                // Combine the nested map with legacy flat "scoreDistribution.N" fields from older saves
+                const distribution = {};
+                for (const [s, count] of Object.entries(data.scoreDistribution || {})) {
+                    distribution[s] = (distribution[s] || 0) + count;
+                }
+                for (const [key, count] of Object.entries(data)) {
+                    if (key.startsWith('scoreDistribution.')) {
+                        const s = key.slice('scoreDistribution.'.length);
+                        distribution[s] = (distribution[s] || 0) + count;
+                    }
+                }
                 let scoresBelow = 0;
                 for (const [s, count] of Object.entries(distribution)) {
                     if (parseInt(s) < score) scoresBelow += count;
@@ -2338,6 +2367,9 @@
             // Update allocated amount
             allocatedEl.textContent = '₹' + formatLakhCrore(total);
 
+            // Nothing to score until something is allocated
+            document.getElementById('submit-btn').disabled = total === 0;
+
             // Update remaining amount
             if (remaining > 0) {
                 remainingEl.textContent = '₹' + formatLakhCrore(remaining);
@@ -2425,9 +2457,11 @@
                     }
                 } else if (ratio <= 0.5) {
                     insight.type = 'less';
-                    insight.multiplier = (1/ratio).toFixed(1) + 'x less';
-                    if (1/ratio > maxUnderRatio) {
-                        maxUnderRatio = 1/ratio;
+                    // Cap so a zero allocation doesn't produce Infinity
+                    const underRatio = ratio === 0 ? 100 : Math.min(1 / ratio, 100);
+                    insight.multiplier = ratio === 0 ? 'Zero' : underRatio.toFixed(1) + 'x less';
+                    if (underRatio > maxUnderRatio) {
+                        maxUnderRatio = underRatio;
                         biggestUnderspend = insight;
                     }
                 } else {
@@ -2626,7 +2660,7 @@
                     icon: '🤔',
                     title: 'Interesting Choice',
                     text: `You allocated <strong>${biggestUnderspend.multiplier}</strong> to <strong>${biggestUnderspend.name}</strong>. The government actually spends ₹${formatLakhCrore(biggestUnderspend.actualAmount)} (${biggestUnderspend.actualPercent}%) on this!`,
-                    relevance: 1 / biggestUnderspend.ratio
+                    relevance: maxUnderRatio
                 });
             }
 
@@ -2729,6 +2763,9 @@
         }
 
         function generateLessMessage(insight) {
+            if (insight.ratio === 0) {
+                return `You allocated <strong>nothing</strong> here. The government spends <strong>₹${formatLakhCrore(insight.actualAmount)}</strong> (${insight.actualPercent}% of the budget) on ${insight.name.replace('*', '')}.`;
+            }
             const messages = {
                 'health': `You allocated <strong>${insight.multiplier}</strong> than the government. Even so, many argue India's healthcare spending should be even higher!`,
                 'education': `You spent <strong>${insight.multiplier}</strong> than the government. Education funding is actually a hot debate in policy circles!`,
@@ -2800,23 +2837,5 @@
         // Initialize on load
         init();
     </script>
-
-    <!-- Mobile Allocation Ticker -->
-    <div class="mobile-ticker" id="mobile-ticker">
-        <div class="ticker-item">
-            <span class="ticker-label">Allocated</span>
-            <span class="ticker-value allocated" id="ticker-allocated">₹0</span>
-        </div>
-        <div class="ticker-progress">
-            <div class="ticker-bar">
-                <div class="ticker-bar-fill" id="ticker-bar-fill" style="width: 0%"></div>
-            </div>
-            <span class="ticker-percent" id="ticker-percent">0%</span>
-        </div>
-        <div class="ticker-item">
-            <span class="ticker-label">Remaining</span>
-            <span class="ticker-value remaining" id="ticker-remaining">₹53L Cr</span>
-        </div>
-    </div>
 </body>
 </html>
